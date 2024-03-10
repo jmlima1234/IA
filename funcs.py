@@ -1,8 +1,9 @@
 class Piece:
-    def __init__(self, color):
+    def __init__(self, color, coordinatess):
         self.color = color  # Cor da peça (vermelho ou verde)
         self.owner = None  # Proprietário da pilha (jogador que controla a pilha)
         self.stacked_pieces = []  # Lista de peças empilhadas
+        self.coordinates = coordinatess # x and y
 
     def add_stacked_piece(self, piece):
         """Adiciona uma peça empilhada à pilha."""
@@ -30,12 +31,12 @@ class Piece:
 class Player:
     def __init__(self, color):
         self.color = color  # Cor do jogador (vermelho ou verde)
-        self.reserve_pieces = []  # Lista de peças de reserva do jogador
+        self.reserve_pieces = 0  # Lista de peças de reserva do jogador
         self.captured_pieces = 0  # Número de peças capturadas pelo jogador
 
     def add_reserve_piece(self, piece):
         """Adiciona uma peça de reserva ao jogador."""
-        self.reserve_pieces.append(piece)
+        self.reserve_pieces += 1
 
     def remove_reserve_piece(self):
         """Remove e retorna uma peça de reserva do jogador."""
