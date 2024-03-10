@@ -1,10 +1,25 @@
-class Piece:
-    def __init__(self, color, coordinatess):
-        self.color = color  # Cor da peça (vermelho ou verde)
-        self.owner = None  # Proprietário da pilha (jogador que controla a pilha)
-        self.stacked_pieces = []  # Lista de peças empilhadas
-        self.coordinates = coordinatess # x and y
+class Pile:
+    def __init__(self, player, pieces, coordinatess):
+        self.coordinates = coordinatess
+        self.owner = player  # Proprietário da pilha (jogador que controla a pilha)
+        self.stackedPieces = pieces
 
+    def moveDown(self,numSteps):
+        if(numSteps > len(self.stackedPieces)):
+            return None
+        
+    def moveRight(self,numSteps):
+        if(numSteps > len(self.stackedPieces)):
+            return None
+    
+    def moveLeft(self,numSteps):
+        if(numSteps > len(self.stackedPieces)):
+            return None
+
+    def moveUP(self,numSteps):
+        if(numSteps > len(self.stackedPieces)):
+            return None
+                        
     def add_stacked_piece(self, piece):
         """Adiciona uma peça empilhada à pilha."""
         self.stacked_pieces.append(piece)
@@ -28,6 +43,23 @@ class Piece:
         """Verifica se esta pilha de peças é controlada pelo jogador especificado."""
         return self.owner == player
 
+class Piece:
+    def __init__(self, color, coordinatess):
+        self.color = color  # Cor da peça (vermelho ou verde)
+        self.coordinates = coordinatess # x and y
+
+    def move_up():
+        return None
+    
+    def move_right():
+        return None
+    
+    def move_down():
+        return None
+    
+    def move_left():
+        return None
+
 class Player:
     def __init__(self, color):
         self.color = color  # Cor do jogador (vermelho ou verde)
@@ -40,14 +72,12 @@ class Player:
 
     def remove_reserve_piece(self):
         """Remove e retorna uma peça de reserva do jogador."""
-        if self.reserve_pieces:
-            return self.reserve_pieces.pop()  # Remove e retorna a última peça de reserva
-        else:
-            return None
-
+        if self.reserve_pieces > 0:
+            self.reserve_pieces -= 1  # Remove e retorna a última peça de reserva
+        
     def get_reserve_pieces_count(self):
         """Retorna a contagem de peças de reserva do jogador."""
-        return len(self.reserve_pieces)
+        return self.reserve_pieces
 
     def capture_piece(self,number_of_pieces):
         self.captured_pieces += number_of_pieces    
