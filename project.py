@@ -2,6 +2,7 @@ import pygame
 import sys
 from funcs import Piece, Player
 import random
+from pygame.locals import *
 
 
 # Definição das coresWHITE = (255, 255, 255)
@@ -95,11 +96,16 @@ def draw_board(screen):
                 piece_y = offset_y + y * CELL_SIZE
                 pygame.draw.rect(screen, color, (piece_x + CELL_SIZE // 4, piece_y + CELL_SIZE // 2 + 24, CELL_SIZE // 2, CELL_SIZE // 10))
 
+#------------------------------------------------------------------------
+# FUNÇOES QUE ACRESCENTAMOS
 
-def draw_blinking_border(screen, cell_x, cell_y, cell_size, color):
-    global blinking_on
+def draw_blinking_border(screen, cell_x, cell_y, cell_size, color, blinking_on):
     if blinking_on:
-        pygame.draw.circle(screen, color, (cell_x + cell_size // 2, cell_y + cell_size // 2), cell_size // 2, 10)
+        # Adjust the added radius for a closer border; reduce it for less gap
+        border_radius_increase = 3  # This value adds to the radius for the border; decrease it for a closer border
+        border_thickness = 3  # This is the thickness of the border; adjust as needed
+        
+        pygame.draw.circle(screen, color, (cell_x + cell_size // 2, cell_y + cell_size // 2), cell_size // 2 + border_radius_increase, border_thickness)
 
 def remove_border(screen, piece_x, piece_y, cell_size, color):
     pygame.draw.circle(screen, color, (cell_x + cell_size // 2, cell_y + cell_size // 2), cell_size // 2, 10)
@@ -115,7 +121,7 @@ def piece_at_click(board, board_x, board_y):
     if 0 <= board_x < len(board[0]) and 0 <= board_y < len(board):
         return board[board_y][board_x] != " "
     return False
-
+#--------------------------------------------------------------------------------------
 
 
 def show_menu(screen):
@@ -139,6 +145,9 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Focus Board")
     clock = pygame.time.Clock()
+
+    last_blink_time = pygame.time.get_ticks()
+    blink_interval = 500  # milliseconds
 
     menu = True
     mode_select = False
@@ -195,8 +204,23 @@ def main():
                                 difficulty_select = True
 
     if bot_mode == "Player vs Player":
-        draw_board(screen)  # Draw the board
-        while (game):
+        draw_board(screen)  # Initially draw the board
+        while game:
+            # Update the current time for blinking logic
+            current_time = pygame.time.get_ticks()
+            if current_time - last_blink_time > blink_interval:
+                blinking_on = not blinking_on
+                last_blink_time = current_time
+                # Redraw the board and blinking border with every blink toggle
+                draw_board(screen)
+                if clicked_cell:
+                    piece_x, piece_y = clicked_cell
+                    cell_x = offset_x + piece_x * CELL_SIZE
+                    cell_y = offset_y + piece_y * CELL_SIZE
+                    draw_blinking_border(screen, cell_x, cell_y, CELL_SIZE, WHITE, blinking_on)
+                pygame.display.flip()
+
+            # Event handling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game = False
@@ -204,22 +228,19 @@ def main():
                     mouse_pos = pygame.mouse.get_pos()
                     board_x, board_y = get_board_position(mouse_pos, offset_x, offset_y, CELL_SIZE)
                     if piece_at_click(board, board_x, board_y):
-                        print(f"A piece was clicked at {board_x}, {board_y}")
-                        if (clicked_cell != None):
-                            remove_border(screen, board_x, board_y, CELL_SIZE, BLACK)
-                        clicked_cell = (board_x, board_y)
+                        if clicked_cell == (board_x, board_y):  # Toggle selection off if the same cell is clicked again
+                            clicked_cell = None
+                        else:  # Select a new piece
+                            clicked_cell = (board_x, board_y)
+                        # Redraw board to reflect new selection state
+                        draw_board(screen)
                         if clicked_cell:
-                            board_x, board_y = clicked_cell
+                            # Draw blinking border around newly selected cell
                             piece_x = offset_x + board_x * CELL_SIZE
                             piece_y = offset_y + board_y * CELL_SIZE
-                            draw_blinking_border(screen, piece_x, piece_y, CELL_SIZE, WHITE)  # WHITE for the border
+                            draw_blinking_border(screen, piece_x, piece_y, CELL_SIZE, WHITE, blinking_on)
+                        pygame.display.flip()
 
-                            pygame.display.flip()  # Update the display
-
-                            
-                        # Here you can add logic to handle selecting the piece,
-                        # moving it, or whatever action is appropriate for your game.
-            pygame.display.flip()  # Update the display
 
     while difficulty_select:
         screen.fill(WHITE)
@@ -249,11 +270,10 @@ def main():
         draw_board(screen)  # Draw the board
         while (game):
             if clicked_cell:
-                cell_x, cell_y = clicked_cell
-                piece_x = offset_x + cell_x * CELL_SIZE
-                piece_y = offset_y + cell_y * CELL_SIZE
-                draw_blinking_border(screen, piece_x, piece_y, CELL_SIZE, WHITE)  # WHITE for the border
-
+                # Recalculate piece_x and piece_y based on clicked_cell
+                piece_x = offset_x + clicked_cell[0] * CELL_SIZE
+                piece_y = offset_y + clicked_cell[1] * CELL_SIZE
+                draw_blinking_border(screen, piece_x, piece_y, CELL_SIZE, WHITE, blinking_on)
             pygame.display.flip()  # Update the display
 
             clock.tick(60)  # Assuming you're calling this every frame
