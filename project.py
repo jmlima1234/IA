@@ -12,6 +12,7 @@ GREEN = (0, 255, 0)
 GRAY = (128, 128, 128)
 BROWN = (165, 113, 100)
 BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
 
 LEFT = 1
 RIGHT = 3
@@ -121,6 +122,25 @@ def piece_at_click(board, board_x, board_y):
     if 0 <= board_x < len(board[0]) and 0 <= board_y < len(board):
         return board[board_y][board_x] != " "
     return False
+
+def draw_adjacent_borders(screen, selected_cell_x, selected_cell_y, cell_size, color):
+    directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # Top, right, bottom, left
+    for dx, dy in directions:
+        adj_x, adj_y = selected_cell_x + dx, selected_cell_y + dy
+        if 0 <= adj_x < 8 and 0 <= adj_y < 8 and is_within_board(adj_x, adj_y):  # Check if the cell is within the octagonal board
+            cell_x = offset_x + adj_x * cell_size
+            cell_y = offset_y + adj_y * cell_size
+            # Draw the border around the adjacent cell
+            pygame.draw.circle(screen, color, (cell_x + cell_size // 2, cell_y + cell_size // 2), cell_size // 2 - 2, 4)
+def is_within_board(x, y):
+    # Check for the three corners on each of the four sides of the octagon.
+    corners = [
+        (0, 0), (0, 1), (1, 0),  # Top-left corner
+        (0, 6), (0, 7), (1, 7),  # Top-right corner
+        (6, 0), (7, 0), (7, 1),  # Bottom-left corner
+        (6, 7), (7, 6), (7, 7)   # Bottom-right corner
+    ]
+    return (x, y) not in corners
 #--------------------------------------------------------------------------------------
 
 
@@ -218,6 +238,7 @@ def main():
                     cell_x = offset_x + piece_x * CELL_SIZE
                     cell_y = offset_y + piece_y * CELL_SIZE
                     draw_blinking_border(screen, cell_x, cell_y, CELL_SIZE, WHITE, blinking_on)
+                    draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE)  # Keep adjacent borders visible
                 pygame.display.flip()
 
             # Event handling
@@ -239,6 +260,7 @@ def main():
                             piece_x = offset_x + board_x * CELL_SIZE
                             piece_y = offset_y + board_y * CELL_SIZE
                             draw_blinking_border(screen, piece_x, piece_y, CELL_SIZE, WHITE, blinking_on)
+                            draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE)
                         pygame.display.flip()
 
 
