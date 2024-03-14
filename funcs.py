@@ -20,6 +20,9 @@ class Pile:
         if(numSteps > len(self.stackedPieces)):
             return None
                         
+    def getTop_mostPiece(self):
+        return self.owner          
+
     def add_stacked_piece(self, piece):
         """Adiciona uma peça empilhada à pilha."""
         self.stacked_pieces.append(piece)
@@ -34,10 +37,6 @@ class Pile:
     def get_total_height(self):
         """Retorna a altura total da pilha de peças."""
         return len(self.stacked_pieces)
-
-    def is_top_piece(self):
-        """Verifica se esta peça está no topo da pilha."""
-        return len(self.stacked_pieces) == 0
 
     def is_controlled_by(self, player):
         """Verifica se esta pilha de peças é controlada pelo jogador especificado."""

@@ -1,6 +1,6 @@
 import pygame
 import sys
-from funcs import Piece, Player
+from funcs import *
 import random
 
 
@@ -37,8 +37,36 @@ board = [
     [" "," ", "Y", "Y", "Y", "Y"," "," "]
 ]
 
+def create_board(board):
+    new_board = []
+    x = 0
+    y =0 
+    for line in board:
+        for cell in line:
+            new_board.append([])  # Append an empty list for each line
+
+            if cell == " ":
+                new_board[x].append(None)
+
+            elif cell == "Y":
+                new_board[x].append(Pile(None,[],(x,y)))
+
+            elif cell == "R":
+                new_board[x].append(Pile("Red",["Red"],(x,y)))
+
+            elif cell == "G":
+                new_board[x].append(Pile("Green",["Green"],(x,y)))
+            
+            print("iteration ", cell, ": ", new_board)
+            x+=1
+            
+    return new_board
+
 # Função para desenhar o tabuleiro
 def draw_board(screen):
+
+    game_board = create_board(board)
+    print(game_board)
     # Fill the background with gray color
     screen.fill(GRAY)
     
@@ -163,7 +191,8 @@ def main():
     if bot_mode == "Player vs Player":
         draw_board(screen)  # Draw the board
         while (game):
-            pygame.display.flip()  # Update the display
+            pygame.display.flip()
+                    
 
     while difficulty_select:
         screen.fill(WHITE)
