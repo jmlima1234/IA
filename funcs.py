@@ -20,9 +20,22 @@ class Pile:
         if(numSteps > len(self.stackedPieces)):
             return None
                         
-    def add_stacked_piece(self, piece):
-        """Adiciona uma peça empilhada à pilha."""
-        self.stacked_pieces.append(piece)
+    def add_pieces(self, pieces):
+        """
+        Add multiple pieces to the top of the pile. The first piece in the 'pieces' list
+        becomes the new top piece of the pile, and its owner becomes the owner of the pile.
+        """
+        # Add the new pieces to the top of the pile
+        self.stackedPieces = pieces + self.stackedPieces
+        # Update the owner based on the top piece
+        if pieces:
+            self.owner = pieces[0]  # Assuming 'pieces' contains owners/colors
+
+    def transfer_stack_to(self, target_pile):
+        """Transfer the stack of pieces to another pile."""
+        target_pile.add_pieces(self.stackedPieces)
+        self.stackedPieces = []
+        self.owner = None
 
     def remove_stacked_piece(self):
         """Remove a peça empilhada mais abaixo na pilha."""

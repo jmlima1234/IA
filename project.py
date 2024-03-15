@@ -30,7 +30,7 @@ red_pieces = []
 
 #Jogadores
 players = []
-idx_player_playing = random.randint(1,2)
+idx_player_playing = random.randint(0,1)
 
 clicked_cell = None  # This will hold the (x, y) of the last clicked cell
 blinking_on = True
@@ -49,6 +49,8 @@ board = [
 ]
 
 def create_board(board):
+    players.append(Player("Red"))
+    players.append(Player("Green"))
     new_board = []
     for y, line in enumerate(board):
         new_row = []  # Create a new row for each line
@@ -168,6 +170,30 @@ def is_within_board(x, y):
         (6, 7), (7, 6), (7, 7)   # Bottom-right corner
     ]
     return (x, y) not in corners
+
+def is_adjacent(clicked_cell, board_x, board_y, num_steps):
+    """
+    Determine if the target cell is within 'num_steps' range of the clicked cell,
+    only allowing horizontal or vertical adjacency.
+    """
+    dx = abs(clicked_cell[0] - board_x)
+    dy = abs(clicked_cell[1] - board_y)
+    return (dx <= num_steps and dy == 0) or (dy <= num_steps and dx == 0)
+
+
+def transfer_stack(clicked_cell, target_cell, game_board):
+    """
+    Transfer the stack of pieces from the clicked_cell to the target_cell.
+    """
+    # Get the pile objects for the clicked and target cells
+    pile_from = game_board[clicked_cell[1]][clicked_cell[0]]
+    pile_to = game_board[target_cell[1]][target_cell[0]]
+    
+    # Transfer the stack if the target pile exists
+    if pile_to:
+        pile_to.stackedPieces.extend(pile_from.stackedPieces)
+        pile_from.stackedPieces = []    
+
 #--------------------------------------------------------------------------------------
 
 
@@ -192,6 +218,9 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Focus Board")
     clock = pygame.time.Clock()
+
+    players = [Player("Red"), Player("Green")]
+    idx_player_playing = 0  # Start with the red player
 
     last_blink_time = pygame.time.get_ticks()
     blink_interval = 500  # milliseconds
@@ -276,21 +305,38 @@ def main():
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
                     mouse_pos = pygame.mouse.get_pos()
                     board_x, board_y = get_board_position(mouse_pos, offset_x, offset_y, CELL_SIZE)
-                    if piece_at_click(board, board_x, board_y):
-                        if clicked_cell == (board_x, board_y):  # Toggle selection off if the same cell is clicked again
-                            clicked_cell = None
-                        else:  # Select a new piece
+                    clicked_pile = game_board[board_y][board_x] if piece_at_click(board, board_x, board_y) else None
+                    
+                    # If we already have a clicked cell, we're attempting to move the piece
+                    if clicked_cell:
+                        # Check if the target pile exists or the move is to an empty space
+                        if clicked_pile or not game_board[board_y][board_x]:
+                            current_pile = game_board[clicked_cell[1]][clicked_cell[0]]
+                            if is_adjacent(clicked_cell, board_x, board_y, len(current_pile.stackedPieces)):
+                                # Transfer the stack and switch turns only if the target is empty or the move is onto an opponent's pile
+                                if not clicked_pile or clicked_pile.owner != players[idx_player_playing].color:
+                                    transfer_stack(clicked_cell, (board_x, board_y), game_board)
+                                    idx_player_playing = 1 - idx_player_playing  # Switch turns
+                                # Deselect the pile
+                                clicked_cell = None
+                        else:
+                            # Deselect the current pile if the same cell is clicked again
+                            clicked_cell = None if clicked_cell == (board_x, board_y) else clicked_cell
+                    # If we don't have a clicked cell yet, we're selecting a piece
+                    else:
+                        # Proceed if the pile exists and belongs to the current player
+                        if clicked_pile and clicked_pile.owner == players[idx_player_playing].color:
                             clicked_cell = (board_x, board_y)
-                        # Redraw board to reflect new selection state
-                        draw_board(screen,game_board)
-                        if clicked_cell:
-                            # Draw blinking border around newly selected cell
-                            piece_x = offset_x + board_x * CELL_SIZE
-                            piece_y = offset_y + board_y * CELL_SIZE
-                            draw_blinking_border(screen, piece_x, piece_y, CELL_SIZE, WHITE, blinking_on)
-                            draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE,game_board)
-                        pygame.display.flip()
 
+                    # Redraw the board after any action
+                    draw_board(screen, game_board)
+                    if clicked_cell:
+                        # Highlight the selected cell with a blinking border and draw adjacent borders
+                        draw_blinking_border(screen, offset_x + board_x * CELL_SIZE, offset_y + board_y * CELL_SIZE, CELL_SIZE, WHITE, blinking_on)
+                        draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE, game_board)
+                    
+                    # Update the display after handling the event
+                    pygame.display.flip()
 
     while difficulty_select:
         screen.fill(WHITE)
