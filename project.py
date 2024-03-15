@@ -1,6 +1,6 @@
 import pygame
 import sys
-from funcs import Piece, Player
+from funcs import *
 import random
 from pygame.locals import *
 
@@ -48,8 +48,33 @@ board = [
     [" "," ", "Y", "Y", "Y", "Y"," "," "]
 ]
 
+def create_board(board):
+    new_board = []
+    for y, line in enumerate(board):
+        new_row = []  # Create a new row for each line
+        for x, cell in enumerate(line):
+            if cell == " ":
+                new_row.append(None)
+            elif cell == "Y":
+                new_row.append(Pile(None,[],(x,y)))
+            elif cell == "R":
+                new_row.append(Pile("Red",["Red","Green"],(x,y)))
+            elif cell == "G":
+                new_row.append(Pile("Green",["Green"],(x,y)))
+            
+            # Check if there's a pile at the current position and print its owner
+            if new_row[-1]:  # If the last appended item is not None
+                print(f"Iteration {x}, {y} - Cell: {cell}, Owner: {new_row[-1].owner}")
+        new_board.append(new_row)  # Append the completed row to the new_board
+            
+    return new_board
+
+
 # Função para desenhar o tabuleiro
-def draw_board(screen):
+def draw_board(screen,game_board):
+
+    
+    #print(game_board) da print de merda
     # Fill the background with gray color
     screen.fill(GRAY)
     
@@ -74,28 +99,23 @@ def draw_board(screen):
     players.append(Player(RED))
     players.append(Player(GREEN))
 
-    for y in range(len(board)):
-        for x in range(len(board[y])):
-            if (board[y][x] != " "):
-                piece_x = offset_x + x * CELL_SIZE
-                print("COORDINATE x 1st piece:", piece_x)
-                piece_y = offset_y + y * CELL_SIZE
-                print("COORDINATE y 1st piece:", piece_y)
+    # Iterate over the game_board and draw the piles based on their stackedPieces
+    for y, row in enumerate(game_board):
+        for x, pile in enumerate(row):
+            piece_x = offset_x + x * CELL_SIZE
+            piece_y = offset_y + y * CELL_SIZE
+
+            if is_within_board(x, y):
+            # Draw the base of the pile
                 pygame.draw.circle(screen, BROWN, (piece_x + CELL_SIZE // 2, piece_y + CELL_SIZE // 2), CELL_SIZE // 2 - 5)
 
-    # Draw the pieces inside the octagon
-    for y in range(len(board)):
-        for x in range(len(board[y])):
-            if (board[y][x] != " ") & (board[y][x] != "Y"):
-                color = RED if board[y][x] == "R" else GREEN 
-                if color == RED:
-                    red_pieces.append(Piece(color,(x,y)))
-                else:
-                    green_pieces.append(Piece(color,(x,y)))
-
-                piece_x = offset_x + x * CELL_SIZE
-                piece_y = offset_y + y * CELL_SIZE
-                pygame.draw.rect(screen, color, (piece_x + CELL_SIZE // 4, piece_y + CELL_SIZE // 2 + 24, CELL_SIZE // 2, CELL_SIZE // 10))
+            # If there is a pile and it has stacked pieces, draw them
+            if pile:
+                for idx, piece_color in enumerate(pile.stackedPieces):
+                    color = RED if piece_color == "Red" else GREEN
+                    # Calculate the rectangle position for each stacked piece
+                    rect_y = piece_y + CELL_SIZE // 2 + (-20 + idx * 10)  # Adjust the Y position based on the index
+                    pygame.draw.rect(screen, color, (piece_x + CELL_SIZE // 4, rect_y, CELL_SIZE // 2, CELL_SIZE // 10))
 
 #------------------------------------------------------------------------
 # FUNÇOES QUE ACRESCENTAMOS
@@ -123,15 +143,22 @@ def piece_at_click(board, board_x, board_y):
         return board[board_y][board_x] != " "
     return False
 
-def draw_adjacent_borders(screen, selected_cell_x, selected_cell_y, cell_size, color):
-    directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # Top, right, bottom, left
-    for dx, dy in directions:
-        adj_x, adj_y = selected_cell_x + dx, selected_cell_y + dy
-        if 0 <= adj_x < 8 and 0 <= adj_y < 8 and is_within_board(adj_x, adj_y):  # Check if the cell is within the octagonal board
-            cell_x = offset_x + adj_x * cell_size
-            cell_y = offset_y + adj_y * cell_size
-            # Draw the border around the adjacent cell
-            pygame.draw.circle(screen, color, (cell_x + cell_size // 2, cell_y + cell_size // 2), cell_size // 2 - 2, 4)
+def draw_adjacent_borders(screen, selected_cell_x, selected_cell_y, cell_size, color, game_board):
+    pile = game_board[selected_cell_y][selected_cell_x]
+    if pile:
+        num_steps = len(pile.stackedPieces)  # Get the number of steps based on the pile's height
+        directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # Top, right, bottom, left
+
+        for dx, dy in directions:
+            for step in range(1, num_steps + 1):
+                adj_x, adj_y = selected_cell_x + step * dx, selected_cell_y + step * dy
+                if 0 <= adj_x < 8 and 0 <= adj_y < 8 and is_within_board(adj_x, adj_y):
+                    # Draw a border around the cell that is 'step' distance away
+                    cell_x = offset_x + adj_x * cell_size
+                    cell_y = offset_y + adj_y * cell_size
+                    pygame.draw.circle(screen, color, (cell_x + cell_size // 2, cell_y + cell_size // 2), cell_size // 2 - 2, 4)
+
+
 def is_within_board(x, y):
     # Check for the three corners on each of the four sides of the octagon.
     corners = [
@@ -224,7 +251,8 @@ def main():
                                 difficulty_select = True
 
     if bot_mode == "Player vs Player":
-        draw_board(screen)  # Initially draw the board
+        game_board = create_board(board)
+        draw_board(screen,game_board)  # Initially draw the board
         while game:
             # Update the current time for blinking logic
             current_time = pygame.time.get_ticks()
@@ -232,13 +260,13 @@ def main():
                 blinking_on = not blinking_on
                 last_blink_time = current_time
                 # Redraw the board and blinking border with every blink toggle
-                draw_board(screen)
+                draw_board(screen,game_board)
                 if clicked_cell:
                     piece_x, piece_y = clicked_cell
                     cell_x = offset_x + piece_x * CELL_SIZE
                     cell_y = offset_y + piece_y * CELL_SIZE
                     draw_blinking_border(screen, cell_x, cell_y, CELL_SIZE, WHITE, blinking_on)
-                    draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE)  # Keep adjacent borders visible
+                    draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE,game_board)  # Keep adjacent borders visible
                 pygame.display.flip()
 
             # Event handling
@@ -254,13 +282,13 @@ def main():
                         else:  # Select a new piece
                             clicked_cell = (board_x, board_y)
                         # Redraw board to reflect new selection state
-                        draw_board(screen)
+                        draw_board(screen,game_board)
                         if clicked_cell:
                             # Draw blinking border around newly selected cell
                             piece_x = offset_x + board_x * CELL_SIZE
                             piece_y = offset_y + board_y * CELL_SIZE
                             draw_blinking_border(screen, piece_x, piece_y, CELL_SIZE, WHITE, blinking_on)
-                            draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE)
+                            draw_adjacent_borders(screen, clicked_cell[0], clicked_cell[1], CELL_SIZE, BLUE,game_board)
                         pygame.display.flip()
 
 
