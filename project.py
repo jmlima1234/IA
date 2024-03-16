@@ -35,7 +35,7 @@ idx_player_playing = random.randint(0,1)
 clicked_cell = None  # This will hold the (x, y) of the last clicked cell
 blinking_on = True
 
-
+game_board = []
 # Representação do tabuleiro
 board = [
     [" "," ", "Y", "Y", "Y", "Y"," "," "],
@@ -60,7 +60,7 @@ def create_board(board):
             elif cell == "Y":
                 new_row.append(Pile(None,[],(x,y)))
             elif cell == "R":
-                new_row.append(Pile("Red",["Red","Green"],(x,y)))
+                new_row.append(Pile("Red",["Red"],(x,y)))
             elif cell == "G":
                 new_row.append(Pile("Green",["Green"],(x,y)))
             
@@ -73,16 +73,16 @@ def create_board(board):
 
 
 # Função para desenhar o tabuleiro
-def draw_board(screen,game_board):
-
-    
-    #print(game_board) da print de merda
+def draw_board(screen, board):
     # Fill the background with gray color
     screen.fill(GRAY)
     
- 
-    # Center the board on the screen
-    
+    # Draw the player information in the top left corner
+    font = pygame.font.SysFont(None, 30)
+    player_text = font.render(f"Player: {players[idx_player_playing].get_color()}", True, BLACK)
+    reserve_text = font.render(f"Reserve Pieces: {players[idx_player_playing].get_reserve_pieces()}", True, BLACK)
+    screen.blit(player_text, (10, 10))
+    screen.blit(reserve_text, (10, 40))
 
     # Draw the octagon around the centered board
     octagon_color = GRAY
@@ -97,27 +97,25 @@ def draw_board(screen,game_board):
         (offset_x + 2 * CELL_SIZE, offset_y)
     ]
     pygame.draw.polygon(screen, BLACK, octagon_points)
-    
-    players.append(Player(RED))
-    players.append(Player(GREEN))
 
     # Iterate over the game_board and draw the piles based on their stackedPieces
-    for y, row in enumerate(game_board):
+    for y, row in enumerate(board):
         for x, pile in enumerate(row):
             piece_x = offset_x + x * CELL_SIZE
             piece_y = offset_y + y * CELL_SIZE
 
             if is_within_board(x, y):
-            # Draw the base of the pile
+                # Draw the base of the pile
                 pygame.draw.circle(screen, BROWN, (piece_x + CELL_SIZE // 2, piece_y + CELL_SIZE // 2), CELL_SIZE // 2 - 5)
-
+            
             # If there is a pile and it has stacked pieces, draw them
             if pile:
-                for idx, piece_color in enumerate(pile.stackedPieces):
+                for idx, piece_color in enumerate(pile.get_stack()):
                     color = RED if piece_color == "Red" else GREEN
+                    pos = idx * (CELL_SIZE // 10) 
                     # Calculate the rectangle position for each stacked piece
-                    rect_y = piece_y + CELL_SIZE // 2 + (-20 + idx * 10)  # Adjust the Y position based on the index
-                    pygame.draw.rect(screen, color, (piece_x + CELL_SIZE // 4, rect_y, CELL_SIZE // 2, CELL_SIZE // 10))
+                    pygame.draw.rect(screen, color, (piece_x + CELL_SIZE // 4, piece_y + CELL_SIZE // 2 + 24 - pos , CELL_SIZE // 2, CELL_SIZE // 10))
+
 
 #------------------------------------------------------------------------
 # FUNÇOES QUE ACRESCENTAMOS
@@ -189,10 +187,10 @@ def transfer_stack(clicked_cell, target_cell, game_board):
     pile_from = game_board[clicked_cell[1]][clicked_cell[0]]
     pile_to = game_board[target_cell[1]][target_cell[0]]
     
-    # Transfer the stack if the target pile exists
-    if pile_to:
-        pile_to.stackedPieces.extend(pile_from.stackedPieces)
-        pile_from.stackedPieces = []    
+    game_board[clicked_cell[1]][clicked_cell[0]] = Pile(None,[],pile_from.get_coordinates())
+    game_board[target_cell[1]][target_cell[0]] = pile_to.join_pieces(pile_from, pile_to, players)
+
+
 
 #--------------------------------------------------------------------------------------
 
@@ -213,14 +211,11 @@ def show_menu(screen):
 
 # Função principal
 def main():
-    global clicked_cell, blinking_on, blink_timer
+    global clicked_cell, blinking_on, blink_timer, idx_player_playing
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Focus Board")
     clock = pygame.time.Clock()
-
-    players = [Player("Red"), Player("Green")]
-    idx_player_playing = 0  # Start with the red player
 
     last_blink_time = pygame.time.get_ticks()
     blink_interval = 500  # milliseconds
@@ -308,20 +303,30 @@ def main():
                     clicked_pile = game_board[board_y][board_x] if piece_at_click(board, board_x, board_y) else None
                     
                     # If we already have a clicked cell, we're attempting to move the piece
+                    # If we already have a clicked cell, we're attempting to move the piece
                     if clicked_cell:
-                        # Check if the target pile exists or the move is to an empty space
-                        if clicked_pile or not game_board[board_y][board_x]:
+                        # Check if the target pile exists
+                        if clicked_pile is not None:
                             current_pile = game_board[clicked_cell[1]][clicked_cell[0]]
                             if is_adjacent(clicked_cell, board_x, board_y, len(current_pile.stackedPieces)):
-                                # Transfer the stack and switch turns only if the target is empty or the move is onto an opponent's pile
-                                if not clicked_pile or clicked_pile.owner != players[idx_player_playing].color:
-                                    transfer_stack(clicked_cell, (board_x, board_y), game_board)
-                                    idx_player_playing = 1 - idx_player_playing  # Switch turns
+                                # Transfer the stack and switch turns
+                                transfer_stack(clicked_cell, (board_x, board_y), game_board)
+                                idx_player_playing = 1 - idx_player_playing  # Switch turns
+                                # Deselect the pile
+                                clicked_cell = None
+                        # If the move is to an empty space
+                        elif not piece_at_click(board, board_x, board_y):
+                            current_pile = game_board[clicked_cell[1]][clicked_cell[0]]
+                            if is_adjacent(clicked_cell, board_x, board_y, len(current_pile.stackedPieces)):
+                                # Transfer the stack and switch turns
+                                transfer_stack(clicked_cell, (board_x, board_y), game_board)
+                                idx_player_playing = 1 - idx_player_playing  # Switch turns
                                 # Deselect the pile
                                 clicked_cell = None
                         else:
                             # Deselect the current pile if the same cell is clicked again
                             clicked_cell = None if clicked_cell == (board_x, board_y) else clicked_cell
+
                     # If we don't have a clicked cell yet, we're selecting a piece
                     else:
                         # Proceed if the pile exists and belongs to the current player
