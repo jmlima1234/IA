@@ -26,19 +26,20 @@ class Pile:
         new_coordinates = piece_to.get_coordinates()
         print(new_stack)
 
-        if(len(new_stack) > 5):
-            while(len(new_stack) > 5):
+        if len(new_stack) > 5:
+            while len(new_stack) > 5:
                 if new_stack[0] == "Red":
-                    if "Red" == piece_from.get_owner:
+                    if "Red" == piece_from.get_owner():  # Corrected comparison here
                         players[0].add_reserve_piece()
                     else:
                         players[0].capture_piece()
                 elif new_stack[0] == "Green":
-                    if "Green" == piece_from.get_owner:
+                    if "Green" == piece_from.get_owner():  # Corrected comparison here
                         players[1].add_reserve_piece()
                     else:
                         players[1].capture_piece()
                 new_stack.pop(0)
+
         else:
             return Pile(new_owner,new_stack,new_coordinates)
 
@@ -80,7 +81,7 @@ class Player:
         self.reserve_pieces = 0  # Lista de peças de reserva do jogador
         self.captured_pieces = 0  # Número de peças capturadas pelo jogador
 
-    def add_reserve_piece(self, piece):
+    def add_reserve_piece(self):
         """Adiciona uma peça de reserva ao jogador."""
         self.reserve_pieces += 1
 
@@ -102,5 +103,8 @@ class Player:
     def get_reserve_pieces(self):
         return self.reserve_pieces
     
+    def get_captured_pieces(self):
+        return self.captured_pieces
+
     def get_color(self):
         return self.color

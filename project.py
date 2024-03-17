@@ -74,15 +74,21 @@ def create_board(board):
 
 # Função para desenhar o tabuleiro
 def draw_board(screen, board):
+    global idx_player_playing
     # Fill the background with gray color
     screen.fill(GRAY)
-    
+
+    player_color = RED if players[idx_player_playing].get_color() == "Red" else GREEN
+
     # Draw the player information in the top left corner
-    font = pygame.font.SysFont(None, 30)
-    player_text = font.render(f"Player: {players[idx_player_playing].get_color()}", True, BLACK)
-    reserve_text = font.render(f"Reserve Pieces: {players[idx_player_playing].get_reserve_pieces()}", True, BLACK)
+    font = pygame.font.SysFont(None, 25)
+    player_text = font.render(f"Player: {players[idx_player_playing].get_color()}", True, player_color)
+    reserved_text = font.render(f"Reserve Pieces: {players[idx_player_playing].get_reserve_pieces()}", True, player_color)
+    captured_text = font.render(f"Captured Pieces: {players[idx_player_playing].get_captured_pieces()}", True, player_color)
+
     screen.blit(player_text, (10, 10))
-    screen.blit(reserve_text, (10, 40))
+    screen.blit(reserved_text, (630, 10))
+    screen.blit(captured_text, (630, 40))
 
     # Draw the octagon around the centered board
     octagon_color = GRAY
