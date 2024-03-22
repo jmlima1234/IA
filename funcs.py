@@ -78,7 +78,7 @@ class Pile:
 class Player:
     def __init__(self, color):
         self.color = color  # Cor do jogador (vermelho ou verde)
-        self.reserve_pieces = 0  # Lista de peças de reserva do jogador
+        self.reserve_pieces = 6  # Lista de peças de reserva do jogador
         self.captured_pieces = 0  # Número de peças capturadas pelo jogador
 
     def add_reserve_piece(self):
