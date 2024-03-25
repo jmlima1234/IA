@@ -66,9 +66,8 @@ class MinimaxAI:
 
     def get_possible_moves(self, player_color, game_board):
         possible_moves = []
-
+        print("Olá")
         for y, row in enumerate(game_board):
-            print(row)
             for x, pile in enumerate(row):
                 # Check if the pile exists
                 if pile:
@@ -108,7 +107,6 @@ class MinimaxAI:
     def apply_move(self, game_board, move, players):
         # A move is a tuple of (source coordinates, target coordinates)
         source, target = move
-        print(source)
         if source[0] == 'Reserve':
             target_pile = game_board[target[1]][target[0]]
 
@@ -149,8 +147,9 @@ class MinimaxAI:
                         # Handle the removed piece, whether it's captured or moved to reserve
                         # This would depend on the specific rules of the game
         
-            # Return the modified game board
-            return game_board
+        # Return the modified game board
+        return game_board
+
     
     def build_game_tree(self, game_board, depth, player_color):
         if depth == 0 or self.game_is_over(game_board):
