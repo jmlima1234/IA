@@ -25,8 +25,8 @@ class MinimaxAI:
         self.player_color = player_color  # 'Red' or 'Green'
         self.max_depth = max_depth
 
-    def evaluate_board(game_board, player_color):
-    # Define the point values for each criterion
+    def evaluate_board(self, node):
+        # Define the point values for each criterion
         X_points_per_controlled_stack = 5
         Y_points_per_reserve_piece = 10
         Z_points_per_tall_stack = 20
@@ -36,11 +36,11 @@ class MinimaxAI:
         opponent_score = 0
 
         # Iterate over the board to evaluate the stacks
-        for row in game_board:
+        for row in node.game_board:
             for pile in row:
                 if pile:
                     # Check for controlled stacks
-                    if pile.owner == player_color:
+                    if pile.owner == self.player_color:
                         player_score += X_points_per_controlled_stack
 
                         # Check for stack height of 4 or 5
@@ -49,9 +49,11 @@ class MinimaxAI:
                     else:
                         # Penalize based on the opponent's pieces
                         opponent_score += penalty_points_per_opponent_piece * len(pile.stackedPieces)
-
-        # Evaluate reserve pieces
-        player_score += Y_points_per_reserve_piece * players[player_color].get_reserve_pieces_count()
+        if node.player_color == "Red":
+            # Evaluate reserve pieces
+            player_score += Y_points_per_reserve_piece * players[0].get_reserve_pieces_count()
+        else:
+            player_score += Y_points_per_reserve_piece * players[1].get_reserve_pieces_count()
 
         # Potential mobility could be added here based on the moves available
         # but that would require a more complex analysis of the board state.
@@ -60,13 +62,13 @@ class MinimaxAI:
         final_score = player_score - opponent_score
         return final_score
 
+
     def game_is_over(self, game_board):
         # Check if the game is over and return True or False
         pass
 
     def get_possible_moves(self, player_color, game_board):
         possible_moves = []
-        print("Olá")
         for y, row in enumerate(game_board):
             for x, pile in enumerate(row):
                 # Check if the pile exists
@@ -167,7 +169,7 @@ class MinimaxAI:
 
     def minimax(self, node, is_maximizing_player):
         if node.depth == 0 or self.game_is_over(node.game_board):
-            return self.evaluate_board(node.game_board)
+            return self.evaluate_board(node)
         
         if is_maximizing_player:
             max_eval = float('-inf')
