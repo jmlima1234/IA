@@ -68,9 +68,7 @@ def create_board(board):
             elif cell == "G":
                 new_row.append(Pile("Green",["Green"],(x,y)))
             
-            # Check if there's a pile at the current position and print its owner
-            if new_row[-1]:  # If the last appended item is not None
-                print(f"Iteration {x}, {y} - Cell: {cell}, Owner: {new_row[-1].owner}")
+            
         new_board.append(new_row)  # Append the completed row to the new_board
             
     return new_board

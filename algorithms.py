@@ -1,3 +1,5 @@
+from project import *
+
 class TreeNode:
     def __init__(self, game_board, depth, player_color):
         self.game_board = game_board
@@ -8,14 +10,16 @@ class TreeNode:
     def add_child(self, child_node):
         self.children.append(child_node)
 
-class MinimaxAI:
-
-    DIRECTIONS = {
+DIRECTIONS = {
     "up": (-1, 0),
     "left": (0, -1),
     "down": (1, 0),
     "right": (0, 1),
-    }
+}
+
+
+
+class MinimaxAI:
 
     def __init__(self, player_color, max_depth):
         self.player_color = player_color  # 'Red' or 'Green'
@@ -60,10 +64,11 @@ class MinimaxAI:
         # Check if the game is over and return True or False
         pass
 
-    def get_possible_moves(player_color, game_board):
+    def get_possible_moves(self, player_color, game_board):
         possible_moves = []
 
         for y, row in enumerate(game_board):
+            print(row)
             for x, pile in enumerate(row):
                 # Check if the pile exists
                 if pile:
@@ -81,12 +86,12 @@ class MinimaxAI:
                                         possible_moves.append(((x, y), (adj_x, adj_y)))
 
         # If the player has reserve pieces, we also add potential reserve moves
-        reserve_moves = get_reserve_moves(player_color, game_board)
+        reserve_moves = self.get_reserve_moves(player_color, game_board)
         possible_moves.extend(reserve_moves)
 
         return possible_moves
 
-    def get_reserve_moves(player_color, game_board):
+    def get_reserve_moves(self, player_color, game_board):
         reserve_moves = []
         # Assuming the player object is stored in a dictionary or list, retrieve the player object by color
         player = next(p for p in players if p.color == player_color)
@@ -96,53 +101,65 @@ class MinimaxAI:
                 for x, pile in enumerate(row):
                     if is_within_board(x, y) and (pile is None or pile.owner == player_color):
                         # Add the move to possible moves (from reserve, to coordinates)
-                        reserve_moves.append(("Reserve", (x, y)))
+                        reserve_moves.append((("Reserve", pile.owner), (x, y)))
         return reserve_moves
 
 
-    def apply_move(game_board, move, players):
+    def apply_move(self, game_board, move, players):
         # A move is a tuple of (source coordinates, target coordinates)
         source, target = move
-    
-        # Extract the source and target piles from the board
-        source_pile = game_board[source[1]][source[0]]
-        target_pile = game_board[target[1]][target[0]]
-    
-        # If there is a pile at the source and we are moving to a valid position
-        if source_pile and is_within_board(target[0], target[1]):
+        print(source)
+        if source[0] == 'Reserve':
+            target_pile = game_board[target[1]][target[0]]
+
+            if is_within_board(target[0], target[1]):
+                new_pile = Pile(source[1],[source[1]], target)
+
+                game_board[target[1]][target[0]] = new_pile
+
+                if len(new_pile.stackedPieces) > 5:
+                    while len(new_pile.stackedPieces) > 5:
+                        new_pile.remove_stacked_piece()
+        else:
+            # Extract the source and target piles from the board
+            source_pile = game_board[source[1]][source[0]]
+            target_pile = game_board[target[1]][target[0]]
         
-            # If we are moving onto an existing pile, join them, else create a new pile
-            if target_pile:
-                # Join the piles
-                new_pile = source_pile.join_pieces(source_pile, target_pile, players)
-            else:
-                # Create a new pile at the target with the moved pieces
-                new_pile = Pile(source_pile.owner, source_pile.stackedPieces, target)
-    
-            # Update the game board with the new pile and clear the source pile
-            game_board[target[1]][target[0]] = new_pile
-            game_board[source[1]][source[0]] = Pile(None, [], source)
-    
-            # Check for any pieces that need to be moved to reserve or captured
-            if len(new_pile.stackedPieces) > 5:
-                # This part handles the rule of capturing or moving to reserve
-                # if the pile becomes too tall, as per the game's rules
-                while len(new_pile.stackedPieces) > 5:
-                    removed_piece = new_pile.stackedPieces.pop(0)  # Remove the bottom piece
-                    # Handle the removed piece, whether it's captured or moved to reserve
-                    # This would depend on the specific rules of the game
-    
-        # Return the modified game board
-        return game_board
+            # If there is a pile at the source and we are moving to a valid position
+            if source_pile and is_within_board(target[0], target[1]):
+            
+                # If we are moving onto an existing pile, join them, else create a new pile
+                if target_pile:
+                    # Join the piles
+                    new_pile = source_pile.join_pieces(source_pile, target_pile, players)
+                else:
+                    # Create a new pile at the target with the moved pieces
+                    new_pile = Pile(source_pile.owner, source_pile.stackedPieces, target)
+        
+                # Update the game board with the new pile and clear the source pile
+                game_board[target[1]][target[0]] = new_pile
+                game_board[source[1]][source[0]] = Pile(None, [], source)
+        
+                # Check for any pieces that need to be moved to reserve or captured
+                if len(new_pile.stackedPieces) > 5:
+                    # This part handles the rule of capturing or moving to reserve
+                    # if the pile becomes too tall, as per the game's rules
+                    while len(new_pile.stackedPieces) > 5:
+                        removed_piece = new_pile.stackedPieces.pop(0)  # Remove the bottom piece
+                        # Handle the removed piece, whether it's captured or moved to reserve
+                        # This would depend on the specific rules of the game
+        
+            # Return the modified game board
+            return game_board
     
     def build_game_tree(self, game_board, depth, player_color):
         if depth == 0 or self.game_is_over(game_board):
             return TreeNode(game_board, depth, player_color)
-
+        
         root = TreeNode(game_board, depth, player_color)
         possible_moves = self.get_possible_moves(player_color, game_board)
         for move in possible_moves:
-            new_game_board = self.apply_move(game_board, move)
+            new_game_board = self.apply_move(game_board, move, players)
             next_player_color = 'Green' if player_color == 'Red' else 'Red'
             child_node = self.build_game_tree(new_game_board, depth - 1, next_player_color)
             root.add_child(child_node)
@@ -171,6 +188,29 @@ class MinimaxAI:
 # best_move = ai.minimax(current_game_board, ai.max_depth, ai.player_color == 'Red')
 
 def main():
-    print("hello world")
+    # Initialize game board and other necessary variables
+    board = [
+        [" "," ", "Y", "Y", "Y", "Y"," "," "],
+        [" ", "R", "R", "G", "G", "R", "R"," "],
+        ["Y","G", "G", "R", "R", "G", "G","Y",],
+        ["Y","R", "R", "G", "G", "R","R","Y"],
+        ["Y","G", "G", "R", "R", "G", "G","Y",],
+        ["Y","R", "R", "G", "G", "R","R","Y"],
+        [" ","G", "G", "R", "R", "G", "G"," "],
+        [" "," ", "Y", "Y", "Y", "Y"," "," "]
+    ]    
 
-main()    
+    initial_game_board = create_board(board)
+
+    player_color = 'Red'  # Choose player's color
+    max_depth = 3  # Choose maximum search depth for Minimax
+
+    # Build the game tree
+    ai = MinimaxAI(player_color, max_depth)
+    game_tree_root = ai.build_game_tree(initial_game_board, max_depth, player_color)
+
+    # Perform Minimax search on the game tree
+    best_score = ai.minimax(game_tree_root, True)
+    print("Best score:", best_score)
+
+main() 
