@@ -1,3 +1,13 @@
+class TreeNode:
+    def __init__(self, game_board, depth, player_color):
+        self.game_board = game_board
+        self.depth = depth
+        self.player_color = player_color
+        self.children = []
+
+    def add_child(self, child_node):
+        self.children.append(child_node)
+
 class MinimaxAI:
 
     DIRECTIONS = {
@@ -125,23 +135,34 @@ class MinimaxAI:
         # Return the modified game board
         return game_board
     
-
-    def minimax(self, game_board, depth, is_maximizing_player):
+    def build_game_tree(self, game_board, depth, player_color):
         if depth == 0 or self.game_is_over(game_board):
-            return self.evaluate_board(game_board)
+            return TreeNode(game_board, depth, player_color)
+
+        root = TreeNode(game_board, depth, player_color)
+        possible_moves = self.get_possible_moves(player_color, game_board)
+        for move in possible_moves:
+            new_game_board = self.apply_move(game_board, move)
+            next_player_color = 'Green' if player_color == 'Red' else 'Red'
+            child_node = self.build_game_tree(new_game_board, depth - 1, next_player_color)
+            root.add_child(child_node)
+
+        return root
+
+    def minimax(self, node, is_maximizing_player):
+        if node.depth == 0 or self.game_is_over(node.game_board):
+            return self.evaluate_board(node.game_board)
         
         if is_maximizing_player:
             max_eval = float('-inf')
-            for move in self.get_possible_moves(game_board):
-                new_board = self.apply_move(game_board, move)
-                eval = self.minimax(new_board, depth - 1, False)
+            for child in node.children:
+                eval = self.minimax(child, False)
                 max_eval = max(max_eval, eval)
             return max_eval
         else:
             min_eval = float('inf')
-            for move in self.get_possible_moves(game_board):
-                new_board = self.apply_move(game_board, move)
-                eval = self.minimax(new_board, depth - 1, True)
+            for child in node.children:
+                eval = self.minimax(child, True)
                 min_eval = min(min_eval, eval)
             return min_eval
 
