@@ -21,6 +21,8 @@ DIRECTIONS = {
 
 class MinimaxAI:
 
+
+
     def __init__(self, player_color, max_depth):
         self.player_color = player_color  # 'Red' or 'Green'
         self.max_depth = max_depth
@@ -72,7 +74,7 @@ class MinimaxAI:
         for y, row in enumerate(game_board):
             for x, pile in enumerate(row):
                 # Check if the pile exists
-                if pile:
+                if pile and pile.owner == player_color:
                     # Based on the pile's height, we can move a certain number of steps in each direction
                     num_steps = len(pile.stackedPieces)
 
@@ -80,13 +82,15 @@ class MinimaxAI:
         	            for step in range(1, num_steps + 1):
                                 adj_x, adj_y = x + step * dx, y + step * dy
                                 # Check if the move is within the board and if the target pile exists or is empty
-                                if 0 <= adj_x < len(game_board[0]) and 0 <= adj_y < len(game_board) and is_within_board(adj_x, adj_y):
+                                if 0 <= adj_x < len(game_board[0]) and 0 <= adj_y < len(game_board):
                                     target_pile = game_board[adj_y][adj_x]
-                                    if target_pile is None or target_pile.owner == player_color:
+                                    if target_pile is not None :
                                         # Add the move to possible moves (from coordinates, to coordinates)
+                                        print(x,y,adj_x,adj_y)
                                         possible_moves.append(((x, y), (adj_x, adj_y)))
 
         # If the player has reserve pieces, we also add potential reserve moves
+        
         reserve_moves = self.get_reserve_moves(player_color, game_board)
         possible_moves.extend(reserve_moves)
 
@@ -100,9 +104,10 @@ class MinimaxAI:
         if player.get_reserve_pieces_count() > 0:
             for y, row in enumerate(game_board):
                 for x, pile in enumerate(row):
-                    if is_within_board(x, y) and (pile is None or pile.owner == player_color):
-                        # Add the move to possible moves (from reserve, to coordinates)
-                        reserve_moves.append((("Reserve", pile.owner), (x, y)))
+                    if pile:
+                        if (pile.owner == None):
+                            # Add the move to possible moves (from reserve, to coordinates)
+                            reserve_moves.append((("Reserve", pile.owner), (x, y)))
         return reserve_moves
 
 
@@ -112,21 +117,19 @@ class MinimaxAI:
         if source[0] == 'Reserve':
             target_pile = game_board[target[1]][target[0]]
 
-            if is_within_board(target[0], target[1]):
-                new_pile = Pile(source[1],[source[1]], target)
-
-                game_board[target[1]][target[0]] = new_pile
-
-                if len(new_pile.stackedPieces) > 5:
-                    while len(new_pile.stackedPieces) > 5:
-                        new_pile.remove_stacked_piece()
+        #if is_within_board(target[0], target[1]):
+            new_pile = Pile(source[1],[source[1]], target)
+            game_board[target[1]][target[0]] = new_pile
+            if len(new_pile.stackedPieces) > 5:
+                while len(new_pile.stackedPieces) > 5:
+                    new_pile.remove_stacked_piece()
         else:
             # Extract the source and target piles from the board
             source_pile = game_board[source[1]][source[0]]
             target_pile = game_board[target[1]][target[0]]
         
             # If there is a pile at the source and we are moving to a valid position
-            if source_pile and is_within_board(target[0], target[1]):
+            if source_pile: # and is_within_board(target[0], target[1]):
             
                 # If we are moving onto an existing pile, join them, else create a new pile
                 if target_pile:
@@ -199,19 +202,32 @@ def main():
         ["Y","R", "R", "G", "G", "R","R","Y"],
         [" ","G", "G", "R", "R", "G", "G"," "],
         [" "," ", "Y", "Y", "Y", "Y"," "," "]
-    ]    
+    ]   
+
+    board2 = [
+        [" ", "Y", "Y", " "],
+        ["Y", "R", "G", "Y"],
+        ["Y", "G", "R", "Y"],
+        [" ", "Y", "Y", " "]
+    ]
 
     initial_game_board = create_board(board)
+    initial_game_board2 = create_board(board2)
 
     player_color = 'Red'  # Choose player's color
     max_depth = 3  # Choose maximum search depth for Minimax
 
     # Build the game tree
     ai = MinimaxAI(player_color, max_depth)
-    game_tree_root = ai.build_game_tree(initial_game_board, max_depth, player_color)
+    #game_tree_root = ai.build_game_tree(initial_game_board, max_depth, player_color)
+    game_tree_root2 = ai.build_game_tree(initial_game_board2, max_depth, player_color)
+
+    # Get possible moves for the player
+    #moves = ai.get_possible_moves(player_color, initial_game_board2)
+    #print("Possible moves:", moves)
 
     # Perform Minimax search on the game tree
-    best_score = ai.minimax(game_tree_root, True)
+    best_score = ai.minimax(game_tree_root2, True)
     print("Best score:", best_score)
 
 main() 

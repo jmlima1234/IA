@@ -24,7 +24,7 @@ class Pile:
         new_stack = piece_to.get_stack() + piece_from.get_stack()  # Create a new stack with combined elements
         new_owner = piece_from.get_owner()
         new_coordinates = piece_to.get_coordinates()
-        print(new_stack)
+        #print(new_stack)
 
         if len(new_stack) > 5:
             while len(new_stack) > 5:
