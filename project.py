@@ -148,7 +148,7 @@ def draw_endgame_screen(screen, result):
     else: 
         title_text = font.render("Player GREEN wins the game!", True, GREEN)
 
-    screen.blit(title_text, (150, 200))
+    screen.blit(title_text, (250, 200))
     
     start_text = font.render("Play Again", True, BLACK)
     screen.blit(start_text, (350, 300))
@@ -532,9 +532,7 @@ def game_state(screen):
                     draw_blinking_border(screen, RESERVE_CIRCLE_CENTER[0], RESERVE_CIRCLE_CENTER[1], RESERVE_CIRCLE_RADIUS, WHITE, blinking_on)
 
                 result = check_win_conditions(players, game_board)
-                print(result)
                 if result["has_winner"]:
-                    print(result["winner"])
                     result["next_state"] = "endgame_menu"
                     return result
                 
@@ -543,7 +541,7 @@ def game_state(screen):
     return {"next_state": "game", "has_winner": False, "winner": None, "reason": ""}
     
 def endgame_menu_state(screen,result):
-    result2 = {"has_winner": True, "winner": 'Red', "reason": "too good"}
+    # result = {"next_state": "endgame_menu", "has_winner": True, "winner": 'Green', "reason": "too good"}
     draw_endgame_screen(screen, result)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -579,13 +577,13 @@ def main():
     "endgame_menu": endgame_menu_state
     }
 
-    state = "menu"
+    state = "endgame_menu"
     result = None
+    # result = {"next_state": "endgame_menu", "has_winner": True, "winner": 'Green', "reason": "too good"}
     while True:
 
         state_func = state_machine[state]
         if state == "endgame_menu":
-            print("brefore endgame func", result)
             result = endgame_menu_state(screen, result)
         else:
             result = state_func(screen)
