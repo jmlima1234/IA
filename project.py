@@ -330,9 +330,9 @@ def show_menu(screen):
     
     render_3d_text(screen, "FOCUS", font_large_bold, SILVER, DARK_GRAY, (200, 100), depth=5)
 
-    render_3d_text(screen, "Start", font, BLACK, BLACK, (350,300), depth=1)
+    render_3d_text(screen, "Start", font, BLACK, BLACK, (320,300), depth=1)
 
-    render_3d_text(screen, "Exit", font, BLACK, BLACK, (350,400), depth=1)
+    render_3d_text(screen, "Exit", font, BLACK, BLACK, (320,400), depth=1)
     
     pygame.display.flip()
 
@@ -346,7 +346,7 @@ def menu_state(screen):
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
-            if 350 <= mouse_pos[0] <= 450:
+            if 320 <= mouse_pos[0] <= 450:
                 if 300 <= mouse_pos[1] <= 350:
                     return {"next_state": "mode_select"}
                 elif 400 <= mouse_pos[1] <= 450:
@@ -357,12 +357,15 @@ def menu_state(screen):
 def mode_select_state(screen):
     screen.fill(WHITE)
     font = pygame.font.SysFont(None, 50)
-    title_text = font.render("Select Game Mode:", True, BLACK)
+    title_text = font.render("Select Game Mode:", True, SILVER)
     screen.blit(title_text, (220, 200))
 
     for i, mode in enumerate(bot_modes):
         mode_text = font.render(mode, True, BLACK)
         screen.blit(mode_text, (300, 300 + i * 50))
+
+    option = font.render("Return to Main Menu", True, SILVER)
+    screen.blit(option, (220, 500))
 
     pygame.display.flip()
 
@@ -372,6 +375,7 @@ def mode_select_state(screen):
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
+            print(mouse_pos)
             if 300 <= mouse_pos[0] <= 500:
                 for i, _ in enumerate(bot_modes):
                     if 300 + i * 50 <= mouse_pos[1] <= 350 + i * 50:
@@ -380,6 +384,9 @@ def mode_select_state(screen):
                             return {"next_state": "difficulty_select"}
                         else:
                             return {"next_state": "game"}
+            elif 220 <= mouse_pos[0] <= 600:
+                if 500 <= mouse_pos[1] <= 550:
+                    return {"next_state": "menu"}
     return {"next_state": "mode_select"}
 
 def difficulty_select_state(screen):
